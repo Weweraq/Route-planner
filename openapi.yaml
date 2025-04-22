@@ -1,0 +1,41 @@
+openapi: 3.0.0
+info:
+  title: Windsurf Trasy API
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+paths:
+  /mapdata:
+    get:
+      summary: Vrátí data o bodech a hranách
+      responses:
+        '200':
+          description: OK
+  /search:
+    get:
+      summary: Vyhledá místo podle jména
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /route:
+    post:
+      summary: Najde trasu mezi dvěma body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start:
+                  type: integer
+                end:
+                  type: integer
+      responses:
+        '200':
+          description: OK
