@@ -1,19 +1,72 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
 
     <meta charset="UTF-8">
-    <title>LKQ route planner</title>
+    <title>Route Planner</title>
+    <script>
+      function handleGoogleMapsError() {
+        console.error('Google Maps API failed to load!');
+        alert('Failed to load Google Maps. Please check your internet connection.');
+      }
+
+      // Load Google Maps API dynamically with key from server
+      function loadGoogleMapsAPI() {
+        fetch('/api/maps-key')
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              console.error('Error fetching API key:', data.error);
+              handleGoogleMapsError();
+              return;
+            }
+
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&libraries=geometry,places`;
+            script.onerror = handleGoogleMapsError;
+            script.onload = function() {
+              console.log('Google Maps API loaded successfully');
+              // Initialize the app after Google Maps API is loaded
+              import('/static/js/app.js')
+                .then(module => {
+                  window.initApp = module.initApp;
+                  window.initApp();
+                })
+                .catch(error => console.error('Error loading app module:', error));
+            };
+            document.head.appendChild(script);
+          })
+          .catch(error => {
+            console.error('Error fetching API key:', error);
+            handleGoogleMapsError();
+          });
+      }
+
+      // Load the API when the page loads
+      window.addEventListener('DOMContentLoaded', loadGoogleMapsAPI);
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: Arial, sans-serif; margin:0; padding:0; }
-        #container { display: flex; height: 100vh; }
-        #sidebar { width: 350px; background: #f0f0f0; padding: 20px; }
+        #container { display: flex; height: 100vh; flex-direction: row; }
+        #sidebar { width: 400px; background: #f0f0f0; padding: 20px; overflow-y: auto; }
         #map { flex: 1; position: relative; }
         #gmap { width: 100%; height: 100%; }
         .input-group { margin-bottom: 10px; }
         label { display: block; margin-bottom: 4px; }
         input, select, button { width: 100%; padding: 7px; margin-bottom: 5px; box-sizing: border-box; }
-        #route-details { margin-top: 20px; background: #fff; padding: 10px; border-radius: 5px; min-height: 40px; }
+        #route-details { margin-top: 20px; background: #fff; padding: 15px; border-radius: 5px; min-height: 40px; }
+        .route-totals { margin-bottom: 15px; padding: 12px; background: #f0f7ff; border-radius: 5px; border-left: 4px solid #1976d2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .route-totals div { margin-bottom: 5px; }
+        .route-stops { margin-top: 15px; }
+        .route-stops h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
+        .route-point-row { display: flex; align-items: flex-start; margin-bottom: 12px; padding: 10px; border-radius: 4px; background: #f5f5f5; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .route-point-marker { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #1976d2; color: white; border-radius: 50%; font-weight: bold; margin-right: 8px; font-size: 14px; flex-shrink: 0; }
+        .route-point-label { font-weight: bold; min-width: 65px; text-align: left; margin-right: 5px; flex-shrink: 0; }
+        .route-point-details { flex: 1; }
+        .route-point-details div { margin-bottom: 3px; }
+        .route-point-details small { color: #666; }
         .spinner {
             display: flex;
             align-items: center;
@@ -23,7 +76,54 @@
             min-height: 32px;
         }
 
-        /* Styl pro řádky zastávek */
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            #container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            #sidebar {
+                width: 100%;
+                order: 2;
+                padding: 10px;
+                max-height: 60vh;
+            }
+            #map {
+                order: 1;
+                height: 40vh;
+            }
+            .route-point-row {
+                flex-wrap: wrap;
+            }
+            .route-point-details {
+                width: 100%;
+                margin-top: 5px;
+            }
+            h2 {
+                font-size: 1.2em;
+                margin: 10px 0;
+            }
+            /* Make buttons more touch-friendly */
+            button {
+                padding: 10px;
+                margin-bottom: 8px;
+            }
+            /* Adjust spacing for better mobile experience */
+            .input-group {
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Tablet responsiveness */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            #sidebar {
+                width: 350px;
+                padding: 15px;
+            }
+        }
+
+        /* Style for waypoint rows */
         .waypoint-row {
             display: flex;
             align-items: center;
@@ -32,6 +132,20 @@
             border-radius: 4px;
             padding: 2px 4px;
         }
+        .waypoint-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #1976d2;
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 6px;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
         .route-point-row {
             display: flex;
             align-items: center;
@@ -39,6 +153,20 @@
             background: #e9e9e9;
             border-radius: 4px;
             padding: 2px 4px;
+        }
+        .route-point-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #1976d2;
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 6px;
+            font-size: 14px;
+            flex-shrink: 0;
         }
         .waypoint-row input.waypoint {
             flex: 1;
@@ -61,6 +189,7 @@
             cursor: move;
             width: 18px;
             text-align: center;
+            flex-shrink: 0;
         }
         .remove-waypoint {
             width: 24px;
@@ -77,14 +206,35 @@
             padding: 0;
             margin-left: 4px;
             margin-right: 2px;
+            flex-shrink: 0;
         }
         .remove-waypoint:hover {
             background: #fee;
             border-color: #d00;
         }
-        /* Oprav artefakty Sortable.js */
+        /* Fix Sortable.js artifacts */
         .sortable-ghost {
             opacity: 0.6;
+        }
+
+        /* Mobile adjustments for waypoints */
+        @media (max-width: 768px) {
+            .waypoint-row {
+                padding: 4px 6px;
+            }
+            .waypoint-row input.waypoint {
+                height: 36px; /* Larger touch target */
+                font-size: 16px; /* Prevent iOS zoom on focus */
+            }
+            .remove-waypoint {
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+            }
+            .drag-handle {
+                font-size: 20px;
+                width: 24px;
+            }
         }
     </style>
     <style>
@@ -109,47 +259,90 @@
         .suggestion-item:hover {
             background: #e0e0e0;
         }
+
+        /* Mobile sidebar toggle */
+        #sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar-toggle {
+                display: block;
+            }
+
+            /* When sidebar is hidden */
+            #container.sidebar-hidden #sidebar {
+                display: none;
+            }
+
+            #container.sidebar-hidden #map {
+                height: 100vh;
+            }
+        }
     </style>
 </head>
 <body>
+
 <div id="container">
+    <button id="sidebar-toggle" title="Show/hide panel">≡</button>
     <div id="sidebar">
-    <h2>LKQ route planner</h2>
+    <h2>Route Planner <a href="/settings" style="font-size: 0.7em; margin-left: 10px; text-decoration: none;">⚙️ Settings</a></h2>
     <div class="input-group">
         <label for="start">Start:</label>
-        <input id="start" type="text" class="autocomplete-input" placeholder="Zadejte výchozí bod" style="width:100%;">
+        <input id="start" type="text" class="autocomplete-input" placeholder="Enter starting point" style="width:100%;">
     </div>
     <div id="waypoints-list" class="input-group"></div>
-    <button id="add-waypoint" type="button">Přidat zastávku</button>
+    <button id="add-waypoint" type="button">Add Waypoint</button>
     <div class="input-group">
-        <label for="end">Cíl:</label>
-        <input id="end" type="text" class="autocomplete-input" placeholder="Zadejte cílový bod" style="width:100%;">
+        <label for="end">Destination:</label>
+        <input id="end" type="text" class="autocomplete-input" placeholder="Enter destination" style="width:100%;">
     </div>
     <div class="input-group">
-        <label for="excel-upload">Načíst adresy z Excelu (.xlsx):</label>
+        <label for="excel-upload">Load addresses from Excel (.xlsx):</label>
         <input type="file" id="excel-upload" accept=".xlsx">
     </div>
     <div class="input-group">
-        <label for="departure-time">Čas odjezdu:</label>
-        <input type="datetime-local" id="departure-time">
+        <label for="departure-time">Departure time:</label>
+        <input type="datetime-local" id="departure-time" autocomplete="off">
     </div>
     <div class="input-group highway-checkbox-row">
-        <label for="pouzit-highways" style="display:flex;align-items:center;gap:12px;font-size:1.25em;">
-            <input type="checkbox" id="pouzit-highways" checked style="width:28px;height:28px;">
-            <span style="font-size:1.25em;">Použít dálnice</span>
+        <label for="use-highways" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="use-highways" checked style="width:18px;height:18px;">
+            <span>Use highways</span>
         </label>
     </div>
     <div class="input-group">
-        <label for="route-mode">Typ trasy:</label>
+        <div style="display:flex; align-items:center; margin-bottom:5px;">
+            <label for="use-route-type" style="display:flex; align-items:center; gap:8px; margin-right:10px; cursor:pointer;">
+                <input type="checkbox" id="use-route-type" checked style="width:18px; height:18px;">
+                <span>Use route type</span>
+            </label>
+            <div style="flex-grow:1;"></div>
+            <span id="route-type-status" style="font-size:0.85em; color:#666;">Active</span>
+        </div>
         <select id="route-mode">
-            <option value="distance">Nejkratší trasa</option>
-            <option value="time">Nejrychlejší trasa</option>
+            <option value="distance">Shortest route - Optimizes for minimum distance</option>
+            <option value="time">Fastest route - Considers traffic conditions</option>
         </select>
     </div>
-    <button id="plan-route">Naplánovat trasu</button>
+    <button id="plan-route">Plan Route</button>
         <div style="display:flex; gap:8px; margin-bottom:10px;">
-            <button id="export-excel" type="button" disabled>Export do Excelu</button>
-            <button id="export-gps" type="button" disabled>Export GPS souřadnic</button>
+            <button id="export-excel" type="button" disabled>Export to Excel</button>
+            <button id="export-gps" type="button" disabled>Export GPS coordinates</button>
+            <button id="clear-cache" type="button" title="Clear route cache">Clear cache</button>
         </div>
         <div id="route-details"></div>
     </div>
@@ -159,8 +352,9 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- Google Maps API bude načten dynamicky přes main.js -->
-<script src="main.js"></script>
+<!-- App.js is loaded dynamically after Google Maps API loads -->
 
 </body>
 </html>
+
+

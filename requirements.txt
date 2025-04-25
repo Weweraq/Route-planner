@@ -1,2 +1,18 @@
-Flask
-pytest
+# Web framework
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# Environment variables
+python-dotenv==1.0.0
+
+# HTTP client for API requests
+aiohttp==3.8.5
+
+# Testing
+pytest==7.4.0
+
+# Database
+# SQLAlchemy==2.0.20  # Uncomment if you decide to use SQLAlchemy
+
+# Excel file handling
+openpyxl==3.1.2

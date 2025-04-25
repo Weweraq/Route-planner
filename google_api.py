@@ -1,9 +1,9 @@
 import requests
-import os
+from config import Config
 
 class GoogleDirectionsAPI:
     def __init__(self, api_key=None):
-        self.api_key = api_key or os.environ.get("GOOGLE_MAPS_API_KEY")
+        self.api_key = api_key or Config.GOOGLE_MAPS_API_KEY
         self.base_url = "https://maps.googleapis.com/maps/api/directions/json"
 
     def plan_route(self, origin, destination, waypoints=None, mode="driving", departure_time=None, avoid=None, traffic_model=None, optimize_waypoints=False):

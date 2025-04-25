@@ -1,0 +1,10 @@
+include LICENSE
+include README.md
+include requirements.txt
+include .env.example
+recursive-include static *
+recursive-include templates *
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *$py.class

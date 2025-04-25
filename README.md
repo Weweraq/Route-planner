@@ -1,61 +1,176 @@
-# Lokální Mapová a Navigační Aplikace (bez OSM)
+# Route Planner Application
 
-Tato aplikace je jednoduchý offline plánovač tras mezi předdefinovanými body (městy/POI) bez použití OSM nebo externích mapových služeb.
+This application is a route planning tool that uses Google Maps API to calculate routes between locations.
 
-## Struktura projektu
+## Project Structure
 
 ```
 Windsurf-trasy/
-├── app.py              # Spouštěcí soubor Flask aplikace
-├── config.py           # Konfigurace (cesty, klíče, debug)
-├── db.py               # Datová vrstva (práce s databází)
-├── algorithms.py       # Logika výpočtu tras (Dijkstra)
-├── routes.py           # Flask Blueprint s API routami
-├── test_algorithms.py  # Testy pro algoritmy
-├── test_db.py          # Testy pro datovou vrstvu
-├── openapi.yaml        # OpenAPI/Swagger dokumentace API
-├── requirements.txt    # Závislosti (Flask, pytest)
-├── static/
+├── app.py              # Flask application entry point
+├── config.py           # Configuration (paths, keys, debug settings)
+├── db.py               # Data layer (database operations)
+├── algorithms.py       # Route calculation logic
+├── routes.py           # Flask Blueprint with API routes
+├── test_algorithms.py  # Tests for algorithms
+├── test_db.py          # Tests for data layer
+├── openapi.yaml        # OpenAPI/Swagger API documentation
+├── requirements.txt    # Dependencies (Flask, pytest)
+├── .env.example        # Example environment variables file
+├── business/           # Business logic layer
+│   └── route_planner.py # Route planning service
+├── data/               # Data access layer
+│   └── google_maps_client.py # Google Maps API client
+├── static/             # Static files
 │   ├── index.html      # Frontend (HTML)
-│   ├── main.js         # Frontend (JavaScript)
-│   └── map.png         # Statická mapa
-├── places.db           # SQLite databáze
-└── README.md           # Tento soubor
+│   ├── js/             # JavaScript modules
+│   │   ├── app.js      # Main application
+│   │   ├── map-manager.js # Map handling
+│   │   ├── route-service.js # Route service
+│   │   ├── ui-controller.js # UI interactions
+│   │   └── utils.js    # Utility functions
+│   └── css/            # Stylesheets
+├── places.db           # SQLite database
+└── README.md           # This file
 ```
 
-## Spuštění
+## Installation
 
-1. Instalace závislostí:
+### Option 1: Easy Installation (Recommended)
+
+Run the installation script which will set up everything for you:
+
+```bash
+python install.py
+```
+
+This script will:
+1. Check Python version compatibility
+2. Install dependencies
+3. Create a `.env` file from `.env.example`
+4. Initialize the database if needed
+5. Create a start script for your operating system
+
+After installation, edit the `.env` file to add your Google Maps API key.
+
+### Option 2: Manual Installation
+
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-2. Inicializace databáze (pokud ještě neexistuje):
+
+2. Set up your Google Maps API key:
+   - Copy `.env.example` to `.env`
+   - Add your Google Maps API key to the `.env` file
+   ```
+   GOOGLE_MAPS_API_KEY=your_actual_api_key_here
+   ```
+
+3. Initialize the database (if it doesn't exist):
    ```bash
    python init_db.py
    ```
-3. Spuštění aplikace:
+
+### Option 3: Docker Installation
+
+If you have Docker and Docker Compose installed:
+
+1. Copy `.env.example` to `.env` and add your Google Maps API key
+2. Run:
    ```bash
-   python app.py
+   docker-compose up -d
    ```
-4. Otevřete [http://localhost:5000](http://localhost:5000) v prohlížeči.
 
-## Testování
+## Running the Application
 
-Testy spustíte příkazem:
+### Standard Method
+```bash
+python app.py
+```
+
+### Using the Start Script
+After running the installation script:
+- On Windows: Run `start.bat`
+- On Linux/Mac: Run `./start.sh`
+
+### Using Docker
+```bash
+docker-compose up
+```
+
+The application will be available at [http://localhost:5000](http://localhost:5000)
+
+## Testing
+
+Run tests with:
 ```bash
 pytest
 ```
 
-## Konfigurace
+## Configuration
 
-Všechny důležité cesty a nastavení jsou v `config.py` (např. DB_PATH, DEBUG, SECRET_KEY).
+All important settings are in `config.py` (e.g., DB_PATH, DEBUG, SECRET_KEY, GOOGLE_MAPS_API_KEY).
 
-## Dokumentace API
+The application follows a clean architecture pattern:
+- **Presentation Layer**: Flask routes in `routes.py`
+- **Business Logic Layer**: Route planning in `business/route_planner.py`
+- **Data Access Layer**: Google Maps API client in `data/google_maps_client.py`
+- **Frontend**: Modular JavaScript in `static/js/`
 
-Specifikace OpenAPI/Swagger je v souboru `openapi.yaml` a lze ji zobrazit např. pomocí [Swagger Editoru](https://editor.swagger.io/).
+## API Documentation
 
-## Poznámky
-- Mapa je pouze statický obrázek (`static/map.png`).
-- Trasa se vykresluje jako čára mezi body na obrázku.
-- Vyhledávání a plánování funguje pouze mezi předdefinovanými body.
-- Vše je v češtině.
+The OpenAPI/Swagger specification is in the `openapi.yaml` file and can be viewed using the [Swagger Editor](https://editor.swagger.io/).
+
+## Features
+- Plan routes between any locations using Google Maps API
+- Calculate fastest or shortest routes
+- Display traffic information and delays
+- Show estimated arrival times for each waypoint
+- Support for multiple waypoints
+- Import addresses from Excel files
+
+## Transferring to Another Machine
+
+The application is designed to be easily transferable between machines. Here are the recommended methods:
+
+### Method 1: Simple Copy (Recommended for Most Users)
+
+1. Copy the entire application directory to the new machine
+2. Run the installation script on the new machine:
+   ```bash
+   python install.py
+   ```
+3. Edit the `.env` file to set your Google Maps API key
+4. Start the application using the generated start script
+
+### Method 2: Using Git
+
+1. Push your changes to a Git repository
+2. On the new machine, clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/route-planner.git
+   ```
+3. Follow the installation instructions above
+
+### Method 3: Using Docker (Recommended for Production)
+
+1. Copy the application directory to the new machine
+2. Make sure Docker and Docker Compose are installed on the new machine
+3. Create/edit the `.env` file with your settings
+4. Run:
+   ```bash
+   docker-compose up -d
+   ```
+
+### Method 4: Creating a Package
+
+1. Create a distributable package:
+   ```bash
+   python setup.py sdist bdist_wheel
+   ```
+2. Copy the generated package from the `dist` directory to the new machine
+3. On the new machine, install the package:
+   ```bash
+   pip install route-planner-1.0.0.tar.gz
+   ```
+4. Create a `.env` file with your Google Maps API key

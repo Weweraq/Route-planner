@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Planner Settings</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1976d2;
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .settings-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #1976d2;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #1565c0;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+        .info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #1565c0;
+        }
+        a {
+            color: #1976d2;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .api-key-container {
+            display: flex;
+            align-items: center;
+        }
+        .api-key-container input {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .show-hide {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .show-hide input {
+            width: auto;
+            margin-right: 5px;
+        }
+        .nav-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Route Planner Settings</h1>
+
+        <div class="settings-section">
+            <h2>Google Maps API Key</h2>
+            <p>Enter your Google Maps API key below. You can get a key from the <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank">Google Cloud Console</a>.</p>
+
+            <div class="form-group">
+                <label for="api-key">API Key:</label>
+                <div class="api-key-container">
+                    <input type="password" id="api-key" name="api-key" placeholder="Enter your Google Maps API key">
+                    <button id="save-api-key">Save</button>
+                </div>
+                <div class="show-hide">
+                    <input type="checkbox" id="show-api-key">
+                    <label for="show-api-key">Show API key</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button id="test-api-key">Test API Key</button>
+            </div>
+
+            <div id="api-key-status"></div>
+
+            <h3>Required APIs</h3>
+            <p>Make sure the following APIs are enabled in your Google Cloud Console project:</p>
+            <ul>
+                <li>Maps JavaScript API</li>
+                <li>Directions API</li>
+                <li>Places API</li>
+                <li>Geocoding API</li>
+            </ul>
+        </div>
+
+        <div class="settings-section">
+            <h2>Display Settings</h2>
+
+            <div class="form-group">
+                <label for="time-format">Time Format:</label>
+                <select id="time-format" name="time-format">
+                    <option value="morning-afternoon">Morning/Afternoon</option>
+                    <option value="am-pm">AM/PM</option>
+                    <option value="24-hour">24-hour</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="distance-unit">Distance Unit:</label>
+                <select id="distance-unit" name="distance-unit">
+                    <option value="km">Kilometers</option>
+                    <option value="miles">Miles</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button id="back-to-planner">Back to Route Planner</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show/hide API key
+            const apiKeyInput = document.getElementById('api-key');
+            const showApiKeyCheckbox = document.getElementById('show-api-key');
+
+            showApiKeyCheckbox.addEventListener('change', function() {
+                apiKeyInput.type = this.checked ? 'text' : 'password';
+            });
+
+            // Load current API key
+            fetch('/api/maps-key')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error && data.key) {
+                        apiKeyInput.value = data.key;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading API key:', error);
+                });
+
+            // Save API key
+            const saveApiKeyButton = document.getElementById('save-api-key');
+            const apiKeyStatus = document.getElementById('api-key-status');
+
+            saveApiKeyButton.addEventListener('click', function() {
+                const apiKey = apiKeyInput.value.trim();
+
+                if (!apiKey) {
+                    apiKeyStatus.className = 'status error';
+                    apiKeyStatus.textContent = 'Please enter an API key';
+                    return;
+                }
+
+                // Send API key to server
+                apiKeyStatus.className = 'status info';
+                apiKeyStatus.textContent = 'Saving API key...';
+
+                fetch('/api/maps-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key: apiKey })
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.error) {
+                        apiKeyStatus.className = 'status error';
+                        apiKeyStatus.textContent = data.error;
+                    } else {
+                        apiKeyStatus.className = 'status success';
+                        apiKeyStatus.textContent = 'API key saved successfully';
+
+                        // Reload the page after a short delay to ensure the new key is used
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving API key:', error);
+                    apiKeyStatus.className = 'status error';
+                    apiKeyStatus.textContent = 'Error saving API key: ' + error.message;
+                });
+            });
+
+            // Test API key
+            const testApiKeyButton = document.getElementById('test-api-key');
+
+            testApiKeyButton.addEventListener('click', function() {
+                const apiKey = apiKeyInput.value.trim();
+
+                if (!apiKey) {
+                    apiKeyStatus.className = 'status error';
+                    apiKeyStatus.textContent = 'Please enter an API key to test';
+                    return;
+                }
+
+                apiKeyStatus.className = 'status info';
+                apiKeyStatus.textContent = 'Testing API key...';
+
+                // Test the API key with a simple request
+                fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=Prague&destination=Brno&key=${apiKey}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'OK') {
+                        apiKeyStatus.className = 'status success';
+                        apiKeyStatus.textContent = 'API key is valid and working!';
+                    } else if (data.status === 'REQUEST_DENIED') {
+                        apiKeyStatus.className = 'status error';
+                        apiKeyStatus.textContent = 'API key is invalid or restricted: ' + data.error_message;
+                    } else {
+                        apiKeyStatus.className = 'status error';
+                        apiKeyStatus.textContent = 'API returned status: ' + data.status;
+                    }
+                })
+                .catch(error => {
+                    apiKeyStatus.className = 'status error';
+                    apiKeyStatus.textContent = 'Error testing API key: ' + error.message;
+                });
+            });
+
+            // Back to planner button
+            const backToPlannerButton = document.getElementById('back-to-planner');
+
+            backToPlannerButton.addEventListener('click', function() {
+                window.location.href = '/';
+            });
+        });
+    </script>
+</body>
+</html>

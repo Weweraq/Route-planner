@@ -1,7 +1,7 @@
 import sqlite3
-import os
+from config import Config
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'places.db')
+DB_PATH = Config.DB_PATH
 
 def get_connection():
     return sqlite3.connect(DB_PATH)
