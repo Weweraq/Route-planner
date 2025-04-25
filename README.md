@@ -2,15 +2,23 @@
 
 This application is a route planning tool that uses Google Maps API to calculate routes between locations.
 
+## Features
+- Plan routes between any locations using Google Maps API
+- Calculate fastest or shortest routes
+- Display traffic information and delays
+- Show estimated arrival times for each waypoint
+- Support for multiple waypoints
+- Import addresses from Excel files
+
 ## Project Structure
 
 ```
 Windsurf-trasy/
 ├── app.py              # Flask application entry point
-├── config.py           # Configuration (paths, keys, debug settings)
-├── db.py               # Data layer (database operations)
-├── algorithms.py       # Route calculation logic
-├── routes.py           # Flask Blueprint with API routes
+├── config.py            # Configuration (paths, keys, debug settings)
+├── db.py                # Data layer (database operations)
+├── algorithms.py        # Route calculation logic
+├── routes.py            # Flask Blueprint with API routes
 ├── test_algorithms.py  # Tests for algorithms
 ├── test_db.py          # Tests for data layer
 ├── openapi.yaml        # OpenAPI/Swagger API documentation
@@ -158,14 +166,6 @@ GOOGLE_MAPS_API_KEY=your_actual_api_key_here
 ```
 
 **Important:** Never commit your API key to version control. The `.env` file is included in `.gitignore` to prevent this.
-
-## Features
-- Plan routes between any locations using Google Maps API
-- Calculate fastest or shortest routes
-- Display traffic information and delays
-- Show estimated arrival times for each waypoint
-- Support for multiple waypoints
-- Import addresses from Excel files
 
 ## Transferring to Another Machine
 
