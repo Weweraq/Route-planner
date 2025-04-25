@@ -121,6 +121,44 @@ The application follows a clean architecture pattern:
 
 The OpenAPI/Swagger specification is in the `openapi.yaml` file and can be viewed using the [Swagger Editor](https://editor.swagger.io/).
 
+## Google Maps API Setup
+
+This application requires a Google Maps API key with the following APIs enabled:
+
+1. **Directions API** - For calculating routes between locations
+2. **Maps JavaScript API** - For displaying the interactive map
+3. **Geocoding API** - For converting addresses to coordinates
+4. **Distance Matrix API** - For calculating distances and travel times
+
+### How to Get a Google Maps API Key:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Library"
+4. Enable each of the required APIs listed above
+5. Go to "APIs & Services" > "Credentials"
+6. Click "Create Credentials" > "API Key"
+7. Copy your new API key
+
+### Recommended API Restrictions:
+
+For security, it's recommended to restrict your API key:
+
+1. In the Google Cloud Console, go to "APIs & Services" > "Credentials"
+2. Find your API key and click "Edit"
+3. Under "Application restrictions", select "HTTP referrers (websites)"
+4. Add your domain(s) or localhost for development (e.g., `localhost:*`, `127.0.0.1:*`)
+5. Under "API restrictions", select "Restrict key"
+6. Select only the four APIs mentioned above
+7. Click "Save"
+
+After obtaining your API key, add it to your `.env` file:
+```
+GOOGLE_MAPS_API_KEY=your_actual_api_key_here
+```
+
+**Important:** Never commit your API key to version control. The `.env` file is included in `.gitignore` to prevent this.
+
 ## Features
 - Plan routes between any locations using Google Maps API
 - Calculate fastest or shortest routes
